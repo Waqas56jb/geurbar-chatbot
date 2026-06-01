@@ -1,0 +1,85 @@
+// Geurmaatje chatbot — database schema
+// PostgreSQL hosted on Supabase (free tier, with automatic backups).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")      // pooled connection (pgbouncer, port 6543)
+  directUrl = env("DIRECT_URL")        // direct connection (port 5432) for migrations
+}
+
+// A fragrance in Simon's catalog. The bot recommends ONLY from active products here.
+model Product {
+  id          String   @id @default(cuid())
+  code        String   @unique // e.g. "No.078"
+  name        String          // e.g. "Geurbar No.078"
+  category    String          // heren | dames | roomspray | autoparfum
+  gender      String?         // Mannelijk | Vrouwelijk (parfums only)
+  inspiredBy  String          // PUBLIC "geinspireerd door" name, e.g. "Guidance"
+  realName    String?         // PRIVATE real brand (admin-only, never shown on site)
+  type        String?         // e.g. "Warm, zoet en kruidig"
+  intensity   String?         // Licht | Medium | Sterk | Zeer sterk ...
+  season      String?         // Lente/zomer | Herfst/winter | Dagelijks
+  occasions   String?         // comma list: Dagelijks,Avond,Werk,Date
+  notes       String?         // comma list of scent notes
+  description String?
+  priceRegular Float?
+  priceSale   Float?
+  content     String?         // e.g. "200ml"
+  imageUrl    String?
+  url         String?         // product page url
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// A captured lead from a chat conversation.
+model Lead {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String?
+  phone     String?
+  message   String?
+  interest  String?  // product code or scent the customer was interested in
+  status    String   @default("new") // new | contacted | converted | closed
+  sessionId String?
+  createdAt DateTime @default(now())
+}
+
+// A chat session between a visitor and Geurmaatje.
+model Conversation {
+  id        String    @id @default(cuid())
+  sessionId String    @unique
+  visitor   String?   // optional name/email if known
+  language  String?   // detected language
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  messages  Message[]
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String       // user | assistant | system
+  content        String
+  createdAt      DateTime     @default(now())
+}
+
+// Key/value store for bot configuration editable from the admin panel.
+model Setting {
+  key   String @id
+  value String
+}
+
+// Admin dashboard users.
+model AdminUser {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   // bcrypt hash
+  name      String?
+  createdAt DateTime @default(now())
+}
