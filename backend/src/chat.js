@@ -21,6 +21,7 @@ const DEFAULTS = {
   shopInfo: "",
   suggestions:
     "Ik hou van zoete, langhoudende geuren|Welke geur lijkt op mijn favoriet?|Wat is goed voor dagelijks gebruik?|Een fris parfum voor de zomer",
+  launcherIcon: "", // optional emoji for the chat button; empty = B&W bot logo
   primaryColor: "#1a1a1a",
   accentColor: "#c9a227",
 };

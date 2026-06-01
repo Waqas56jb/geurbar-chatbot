@@ -104,6 +104,7 @@ app.get(
         .split("|")
         .map((x) => x.trim())
         .filter(Boolean),
+      launcherIcon: s.launcherIcon || "",
       primaryColor: s.primaryColor,
       accentColor: s.accentColor,
     });

@@ -20,7 +20,7 @@
   var APP = (script.getAttribute("data-app") || origin).replace(/\/$/, "");
   var API = (script.getAttribute("data-api") || "https://geurbar-chatbot-backend.vercel.app").replace(/\/$/, "");
 
-  var cfg = { botName: "Geurmaatje", teaser: "Klaar om een geurtje te kiezen? 😊", accentColor: "#141414" };
+  var cfg = { botName: "Geurmaatje", teaser: "Klaar om een geurtje te kiezen? 😊", accentColor: "#141414", launcherIcon: "" };
   var open = false;
 
   // ---- Shadow host --------------------------------------------------------
@@ -45,7 +45,13 @@
     "@media(max-width:520px){.panel{bottom:0;right:0;width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;border-radius:0}.wrap{bottom:16px;right:16px}}";
   root.appendChild(style);
 
-  var ICON_CHAT = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.6-.8L3 21l1.8-5.4A8.5 8.5 0 1 1 21 11.5z"/></svg>';
+  // Black & white "bot" logo (white on the dark button)
+  var ICON_BOT = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<rect x="4.5" y="8" width="15" height="11" rx="3.5"/>' +
+    '<path d="M12 8V4.5"/><circle cx="12" cy="3.4" r="1.25" fill="#fff" stroke="none"/>' +
+    '<circle cx="9.3" cy="13" r="1.25" fill="#fff" stroke="none"/>' +
+    '<circle cx="14.7" cy="13" r="1.25" fill="#fff" stroke="none"/>' +
+    '<path d="M9.5 16.4h5"/><path d="M2.5 12v2.6M21.5 12v2.6"/></svg>';
   var ICON_CLOSE = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 
   var wrap = document.createElement("div");
@@ -63,7 +69,10 @@
 
   function paint() {
     btn.style.background = cfg.accentColor || "#141414";
-    btn.innerHTML = open ? ICON_CLOSE : ICON_CHAT;
+    if (open) { btn.innerHTML = ICON_CLOSE; return; }
+    btn.innerHTML = cfg.launcherIcon
+      ? '<span style="font-size:28px;line-height:1">' + cfg.launcherIcon + "</span>"
+      : ICON_BOT;
   }
   function openPanel() {
     open = true; teaser.style.display = "none";

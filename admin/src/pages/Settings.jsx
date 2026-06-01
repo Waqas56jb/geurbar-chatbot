@@ -10,6 +10,7 @@ const FIELDS = [
   { key: "personality", label: "Persoonlijkheid / toon", type: "textarea", hint: "Hoe de bot praat: charme, complimenten, stijl" },
   { key: "shopInfo", label: "Winkelinfo / kennisbank", type: "textarea", big: true, hint: "Levering, retour, prijzen, kortingen, contact — de bot beantwoordt beleid-vragen ALLEEN hieruit" },
   { key: "suggestions", label: "Snelle suggesties", type: "textarea", hint: "Scheid met | — getoond als klikbare knoppen in de chat" },
+  { key: "launcherIcon", label: "Chat-knop icoon (emoji)", hint: "Laat leeg voor het standaard zwart-wit bot-logo. Of typ bv. 🧑 🤖 🌸" },
 ];
 
 export default function Settings() {
