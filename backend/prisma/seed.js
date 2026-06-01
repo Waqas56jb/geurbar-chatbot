@@ -145,8 +145,8 @@ const SETTINGS = {
     "Wat is een goede geur voor dagelijks gebruik?",
     "Een frisse geur voor de zomer",
   ].join("|"),
-  primaryColor: "#1a1a1a",
-  accentColor: "#c9a227",
+  primaryColor: "#141414",
+  accentColor: "#141414",
 };
 
 async function main() {
