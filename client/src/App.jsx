@@ -23,6 +23,9 @@ const DEFAULTS = {
   accentColor: "#c9a227",
 };
 
+const IS_EMBED = typeof window !== "undefined" &&
+  new URLSearchParams(window.location.search).get("embed") === "1";
+
 export default function App() {
   const [cfg, setCfg] = useState(DEFAULTS);
   const [started, setStarted] = useState(false);
@@ -77,7 +80,7 @@ export default function App() {
   const initial = (cfg.brandName || "G").charAt(0).toUpperCase();
 
   return (
-    <div className="stage">
+    <div className={`stage${IS_EMBED ? " embed" : ""}`}>
       <div className="card">
         {/* Header */}
         <header className="card-head">
@@ -88,7 +91,11 @@ export default function App() {
               <i className="dot" /> {cfg.tagline} · online
             </span>
           </div>
-          <span className="confidential">privé</span>
+          {IS_EMBED ? (
+            <button className="head-close" aria-label="Sluiten" onClick={() => window.parent?.postMessage("geurmaatje:close", "*")}>×</button>
+          ) : (
+            <span className="confidential">privé</span>
+          )}
         </header>
 
         {!started ? (
