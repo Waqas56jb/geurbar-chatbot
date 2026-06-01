@@ -403,10 +403,14 @@ app.get(
 );
 
 // ---- Start ----------------------------------------------------------------
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`🌸 Geurmaatje backend running on http://localhost:${PORT}`);
-  if (allowed.length) console.log(`   CORS allowed: ${allowed.join(", ")}`);
-});
+// On Vercel the app is invoked as a serverless handler (see api/index.js),
+// so we only bind a port when running locally / on a normal Node host.
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 4000;
+  app.listen(PORT, () => {
+    console.log(`🌸 Geurmaatje backend running on http://localhost:${PORT}`);
+    if (allowed.length) console.log(`   CORS allowed: ${allowed.join(", ")}`);
+  });
+}
 
 export default app;
