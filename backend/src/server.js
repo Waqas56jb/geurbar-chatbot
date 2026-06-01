@@ -33,11 +33,16 @@ import express from "express";
 import cors from "cors";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import multer from "multer";
 import prisma from "./db.js";
 import { runChat, getSettings } from "./chat.js";
+import { uploadImage } from "./storage.js";
 
 const app = express();
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: "2mb" }));
+
+// In-memory upload (max 5MB) — buffer is streamed to Supabase Storage.
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 // ---- CORS -----------------------------------------------------------------
 const allowed = (process.env.CORS_ORIGINS || "")
@@ -160,7 +165,19 @@ app.post(
       data: { updatedAt: new Date() },
     });
 
-    res.json({ sessionId: sid, reply: result.reply, leadCaptured: result.leadCaptured });
+    // Detect product codes mentioned in the reply (e.g. "No.126") and return
+    // those products so the widget can show photo cards alongside the message.
+    const codes = [...new Set((result.reply.match(/No\.\s?\d{2,4}/gi) || []).map((c) => c.replace(/\s/g, "")))];
+    let products = [];
+    if (codes.length) {
+      products = await prisma.product.findMany({
+        where: { active: true, code: { in: codes } },
+      });
+      // preserve mention order
+      products.sort((a, b) => codes.indexOf(a.code) - codes.indexOf(b.code));
+    }
+
+    res.json({ sessionId: sid, reply: result.reply, leadCaptured: result.leadCaptured, products });
   })
 );
 
@@ -214,15 +231,28 @@ app.get(
 const PRODUCT_FIELDS = [
   "code", "name", "category", "gender", "inspiredBy", "realName", "type",
   "intensity", "season", "occasions", "notes", "description",
-  "priceRegular", "priceSale", "content", "imageUrl", "url", "active",
+  "priceRegular", "priceSale", "content", "imageUrl", "images", "url", "active",
 ];
 function pickProduct(body) {
   const data = {};
   for (const f of PRODUCT_FIELDS) if (body[f] !== undefined) data[f] = body[f];
   if (data.priceRegular != null) data.priceRegular = Number(data.priceRegular);
   if (data.priceSale != null) data.priceSale = Number(data.priceSale);
+  if (data.images !== undefined) data.images = Array.isArray(data.images) ? data.images.slice(0, 4) : [];
   return data;
 }
+
+// Upload a single perfume photo to Supabase Storage -> returns its public URL.
+app.post(
+  "/api/admin/upload",
+  requireAuth,
+  upload.single("file"),
+  wrap(async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: "Geen bestand ontvangen" });
+    const { url, path } = await uploadImage(req.file.buffer, req.file.originalname, req.file.mimetype);
+    res.json({ url, path });
+  })
+);
 
 app.post(
   "/api/admin/products",

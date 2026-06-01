@@ -62,7 +62,7 @@ export default function App() {
     setTyping(true);
     try {
       const res = await sendMessage(msg);
-      setMessages((m) => [...m, { role: "assistant", content: res.reply }]);
+      setMessages((m) => [...m, { role: "assistant", content: res.reply, products: res.products || [] }]);
     } catch {
       setMessages((m) => [
         ...m,
@@ -110,8 +110,17 @@ export default function App() {
             {/* Messages */}
             <div className="body" ref={bodyRef}>
               {messages.map((m, i) => (
-                <div key={i} className={`bubble ${m.role}`}>
-                  <span dangerouslySetInnerHTML={{ __html: renderText(m.content) }} />
+                <div key={i} className="msg-row">
+                  <div className={`bubble ${m.role}`}>
+                    <span dangerouslySetInnerHTML={{ __html: renderText(m.content) }} />
+                  </div>
+                  {m.role === "assistant" && m.products?.length > 0 && (
+                    <div className="product-cards">
+                      {m.products.map((p) => (
+                        <ProductCard key={p.id} p={p} />
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
 
@@ -160,5 +169,35 @@ export default function App() {
         </footer>
       </div>
     </div>
+  );
+}
+
+function ProductCard({ p }) {
+  const [idx, setIdx] = useState(0);
+  const imgs = p.images?.length ? p.images : [];
+  const price = p.priceSale
+    ? `€${p.priceSale.toFixed(2)}`
+    : p.priceRegular
+    ? `€${p.priceRegular.toFixed(2)}`
+    : "";
+  const Wrapper = p.url ? "a" : "div";
+  return (
+    <Wrapper className="pcard" {...(p.url ? { href: p.url, target: "_blank", rel: "noreferrer" } : {})}>
+      <div className="pcard-img" onMouseEnter={() => imgs.length > 1 && setIdx(1)} onMouseLeave={() => setIdx(0)}>
+        {imgs[idx] ? <img src={imgs[idx]} alt={p.code} /> : <div className="pcard-ph">🌸</div>}
+        {p.priceSale && p.priceRegular && <span className="pcard-sale">sale</span>}
+      </div>
+      <div className="pcard-body">
+        <div className="pcard-code">{p.code}</div>
+        <div className="pcard-insp">geïnspireerd door {p.inspiredBy}</div>
+        {p.notes && <div className="pcard-notes">{p.notes.split(",").slice(0, 3).join(" · ")}</div>}
+        <div className="pcard-foot">
+          <span className="pcard-price">
+            {p.priceSale && p.priceRegular && <s>€{p.priceRegular.toFixed(2)}</s>} {price}
+          </span>
+          {p.url && <span className="pcard-cta">Bekijk →</span>}
+        </div>
+      </div>
+    </Wrapper>
   );
 }

@@ -31,7 +31,8 @@ model Product {
   priceRegular Float?
   priceSale   Float?
   content     String?         // e.g. "200ml"
-  imageUrl    String?
+  imageUrl    String?         // (legacy) primary image
+  images      String[] @default([]) // up to 4 photo URLs (Supabase Storage)
   url         String?         // product page url
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())

@@ -33,3 +33,17 @@ export async function api(path, { method = "GET", body } = {}) {
 export function login(email, password) {
   return api("/api/auth/login", { method: "POST", body: { email, password } });
 }
+
+// Upload one image file -> returns { url }. Uses multipart (no JSON header).
+export async function uploadFile(file) {
+  const fd = new FormData();
+  fd.append("file", file);
+  const headers = {};
+  if (auth.token) headers.Authorization = `Bearer ${auth.token}`;
+  const res = await fetch(`${API}/api/admin/upload`, { method: "POST", headers, body: fd });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || "Upload mislukt");
+  }
+  return res.json();
+}
