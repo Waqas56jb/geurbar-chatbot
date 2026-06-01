@@ -16,6 +16,13 @@ export async function fetchSettings() {
   return res.json();
 }
 
+export async function fetchHistory() {
+  const sid = getSessionId();
+  const res = await fetch(`${API}/api/chat/history?sessionId=${encodeURIComponent(sid)}`);
+  if (!res.ok) throw new Error("history");
+  return res.json();
+}
+
 export async function sendMessage(message) {
   const res = await fetch(`${API}/api/chat`, {
     method: "POST",

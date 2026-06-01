@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { fetchSettings, sendMessage } from "./api.js";
+import { fetchHistory, fetchSettings, sendMessage } from "./api.js";
 
 // Minimal, safe markdown -> HTML for **bold**, *italic*, line breaks.
 function renderText(text) {
@@ -28,6 +28,7 @@ const IS_EMBED = typeof window !== "undefined" &&
 
 export default function App() {
   const [cfg, setCfg] = useState(DEFAULTS);
+  const [ready, setReady] = useState(false);
   const [started, setStarted] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -36,9 +37,16 @@ export default function App() {
   const inputRef = useRef(null);
 
   useEffect(() => {
-    fetchSettings()
-      .then((s) => setCfg({ ...DEFAULTS, ...s }))
-      .catch(() => {});
+    Promise.all([fetchSettings(), fetchHistory()])
+      .then(([s, h]) => {
+        setCfg({ ...DEFAULTS, ...s });
+        if (h.messages?.length) {
+          setMessages(h.messages);
+          setStarted(true);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setReady(true));
   }, []);
 
   useEffect(() => {
@@ -98,7 +106,12 @@ export default function App() {
           )}
         </header>
 
-        {!started ? (
+        {!ready ? (
+          <div className="welcome">
+            <div className="logo-lg">{initial}</div>
+            <p className="welcome-sub">Laden…</p>
+          </div>
+        ) : !started ? (
           /* Welcome screen */
           <div className="welcome">
             <div className="logo-lg">{initial}</div>

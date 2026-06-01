@@ -7,6 +7,7 @@
 //    GET    /api/settings             -> bot name, teaser, welcome message
 //    GET    /api/products             -> active products (catalog)
 //    POST   /api/chat                 -> talk to Geurmaatje  { sessionId, message }
+//    GET    /api/chat/history         -> restore chat for a sessionId
 //    POST   /api/leads                -> submit a lead directly (contact form)
 //
 //  AUTH
@@ -79,6 +80,20 @@ const wrap = (fn) => (req, res) =>
     console.error(e);
     res.status(500).json({ error: e.message || "Server error" });
   });
+
+function extractProductCodes(text) {
+  return [...new Set((String(text).match(/No\.\s?\d{2,4}/gi) || []).map((c) => c.replace(/\s/g, "")))];
+}
+
+async function productsForReply(reply) {
+  const codes = extractProductCodes(reply);
+  if (!codes.length) return [];
+  const products = await prisma.product.findMany({
+    where: { active: true, code: { in: codes } },
+  });
+  products.sort((a, b) => codes.indexOf(a.code) - codes.indexOf(b.code));
+  return products;
+}
 
 // ===========================================================================
 //  HEALTH
@@ -166,19 +181,33 @@ app.post(
       data: { updatedAt: new Date() },
     });
 
-    // Detect product codes mentioned in the reply (e.g. "No.126") and return
-    // those products so the widget can show photo cards alongside the message.
-    const codes = [...new Set((result.reply.match(/No\.\s?\d{2,4}/gi) || []).map((c) => c.replace(/\s/g, "")))];
-    let products = [];
-    if (codes.length) {
-      products = await prisma.product.findMany({
-        where: { active: true, code: { in: codes } },
-      });
-      // preserve mention order
-      products.sort((a, b) => codes.indexOf(a.code) - codes.indexOf(b.code));
-    }
+    const products = await productsForReply(result.reply);
 
     res.json({ sessionId: sid, reply: result.reply, leadCaptured: result.leadCaptured, products });
+  })
+);
+
+app.get(
+  "/api/chat/history",
+  wrap(async (req, res) => {
+    const sid = String(req.query.sessionId || "");
+    if (!sid) return res.status(400).json({ error: "sessionId required" });
+
+    const convo = await prisma.conversation.findUnique({
+      where: { sessionId: sid },
+      include: { messages: { orderBy: { createdAt: "asc" } } },
+    });
+    if (!convo) return res.json({ sessionId: sid, messages: [] });
+
+    const messages = await Promise.all(
+      convo.messages.map(async (m) => {
+        const msg = { role: m.role, content: m.content };
+        if (m.role === "assistant") msg.products = await productsForReply(m.content);
+        return msg;
+      })
+    );
+
+    res.json({ sessionId: sid, messages });
   })
 );
 
