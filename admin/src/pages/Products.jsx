@@ -3,7 +3,7 @@ import { api, uploadFile } from "../api.js";
 import Modal from "../components/Modal.jsx";
 
 const EMPTY = {
-  code: "", name: "", category: "heren", gender: "", inspiredBy: "", realName: "",
+  code: "", name: "", category: "heren", gender: "", inspiredBy: "", inspiredBrand: "", realName: "",
   type: "", intensity: "", season: "", notes: "", occasions: "",
   priceRegular: "", priceSale: "", content: "", description: "", url: "", active: true, images: [],
 };
@@ -212,7 +212,8 @@ function ProductModal({ product, onClose, onSaved }) {
             </select>
           </Field>
           <Field label="Geïnspireerd door (publiek)"><input value={f.inspiredBy} onChange={set("inspiredBy")} required /></Field>
-          <Field label="Echte merknaam 🔒 (privé)" hint="Alleen voor de bot — nooit zichtbaar op de site"><input value={f.realName || ""} onChange={set("realName")} /></Field>
+          <Field label="Origineel merk / huis" hint="bv. Louis Vuitton — voor 'welke X-geuren heb je?'"><input value={f.inspiredBrand || ""} onChange={set("inspiredBrand")} placeholder="Tom Ford, Dior, Louis Vuitton…" /></Field>
+          <Field label="Echte merknaam 🔒 (privé)" full hint="Alleen voor de bot — nooit zichtbaar op de site"><input value={f.realName || ""} onChange={set("realName")} /></Field>
           <Field label="Type" full hint="bv. Warm, zoet en kruidig"><input value={f.type || ""} onChange={set("type")} /></Field>
           <Field label="Intensiteit"><input value={f.intensity || ""} onChange={set("intensity")} placeholder="Medium / Sterk…" /></Field>
           <Field label="Seizoen"><input value={f.season || ""} onChange={set("season")} placeholder="Lente/zomer…" /></Field>
@@ -266,6 +267,7 @@ function PreviewModal({ product: p, onClose }) {
           {p.realName && <div className="priv">🔒 echte naam: {p.realName}</div>}
           <div className="pi-price">{p.priceSale ? <><s className="muted">€{p.priceRegular?.toFixed(2)}</s> €{p.priceSale.toFixed(2)}</> : (p.priceRegular ? `€${p.priceRegular.toFixed(2)}` : "")}</div>
           <table className="pi-spec"><tbody>
+            {p.inspiredBrand && <tr><td>Merk / huis</td><td>{p.inspiredBrand}</td></tr>}
             {p.category && <tr><td>Categorie</td><td>{p.category}{p.gender ? ` · ${p.gender}` : ""}</td></tr>}
             {p.type && <tr><td>Type</td><td>{p.type}</td></tr>}
             {p.intensity && <tr><td>Intensiteit</td><td>{p.intensity}</td></tr>}

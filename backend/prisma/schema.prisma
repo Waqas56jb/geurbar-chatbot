@@ -20,8 +20,9 @@ model Product {
   name        String          // e.g. "Geurbar No.078"
   category    String          // heren | dames | roomspray | autoparfum
   gender      String?         // Mannelijk | Vrouwelijk (parfums only)
-  inspiredBy  String          // PUBLIC "geinspireerd door" name, e.g. "Guidance"
-  realName    String?         // PRIVATE real brand (admin-only, never shown on site)
+  inspiredBy   String         // PUBLIC "geinspireerd door" name, e.g. "Ombre Nomade"
+  inspiredBrand String?       // designer house of the original, e.g. "Louis Vuitton"
+  realName     String?        // PRIVATE real brand (admin-only, never shown on site)
   type        String?         // e.g. "Warm, zoet en kruidig"
   intensity   String?         // Licht | Medium | Sterk | Zeer sterk ...
   season      String?         // Lente/zomer | Herfst/winter | Dagelijks

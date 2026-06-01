@@ -65,6 +65,35 @@ const CARSPRAYS = [
   ["No.799", "Sandelwood Pachouli", "Houtachtig, warm en aards", "Medium", "Herfst/winter", "Sandelhout, Patchouli, Amber, Musk, Droog hout"],
 ];
 
+// Designer house behind each original scent (used for "which X brand do you have" questions).
+// Admin-editable per product; uncertain ones left blank.
+const BRAND = {
+  "Guidance": "Amouage",
+  "Erba Pura": "Xerjoff",
+  "Santal 33": "Le Labo",
+  "Baccarat Rouge 540": "Maison Francis Kurkdjian",
+  "Tobacco Vanille": "Tom Ford",
+  "Tuscan Leather": "Tom Ford",
+  "Lost Cherry": "Tom Ford",
+  "Black Orchid Mix": "Tom Ford",
+  "Black Afgano": "Nasomatto",
+  "Valaya": "Parfums de Marly",
+  "Delina": "Parfums de Marly",
+  "Layton": "Parfums de Marly",
+  "Althair": "Parfums de Marly",
+  "Black Opium Over Red": "Yves Saint Laurent",
+  "Angels Share": "By Kilian",
+  "Ombre Nomade": "Louis Vuitton",
+  "Imagination": "Louis Vuitton",
+  "Interlude": "Amouage",
+  "Journey": "Amouage",
+  "Aventus": "Creed",
+  "Elixir": "Dior",
+  "Dior Homme": "Dior",
+  "Sauvage": "Dior",
+  "1 Million": "Paco Rabanne",
+};
+
 const num = (code) => code.replace("No.", "").toLowerCase();
 
 const products = [
@@ -74,6 +103,7 @@ const products = [
     category: gender === "Mannelijk" ? "heren" : "dames",
     gender,
     inspiredBy,
+    inspiredBrand: BRAND[inspiredBy] || null,
     type,
     intensity,
     season,
@@ -90,6 +120,7 @@ const products = [
     name: `Geurbar Roomspray ${code}`,
     category: "roomspray",
     inspiredBy,
+    inspiredBrand: BRAND[inspiredBy] || null,
     type: `Roomspray · ${type}`,
     intensity,
     season,
@@ -106,6 +137,7 @@ const products = [
     name: `Geurbar Carspray ${code}`,
     category: "autoparfum",
     inspiredBy,
+    inspiredBrand: BRAND[inspiredBy] || null,
     type: `Carspray · ${type}`,
     intensity,
     season,

@@ -229,7 +229,7 @@ app.get(
 );
 
 const PRODUCT_FIELDS = [
-  "code", "name", "category", "gender", "inspiredBy", "realName", "type",
+  "code", "name", "category", "gender", "inspiredBy", "inspiredBrand", "realName", "type",
   "intensity", "season", "occasions", "notes", "description",
   "priceRegular", "priceSale", "content", "imageUrl", "images", "url", "active",
 ];

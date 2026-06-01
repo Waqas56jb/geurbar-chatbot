@@ -45,6 +45,7 @@ function formatCatalog(products) {
       return [
         `${p.code} [${p.category}${p.gender ? "/" + p.gender : ""}]`,
         `geïnspireerd door: ${p.inspiredBy}`,
+        p.inspiredBrand ? `merk: ${p.inspiredBrand}` : "",
         p.realName ? `(intern/echte naam: ${p.realName})` : "",
         p.type ? `type: ${p.type}` : "",
         p.intensity ? `intensiteit: ${p.intensity}` : "",
@@ -84,6 +85,7 @@ Onze catalogus heeft 4 categorieën: "heren" (herenparfum), "dames" (damesparfum
 # WAT JE DOET
 1. Aanbevelen op voorkeur: vraag indien nodig kort door (voor wie, zoet/fris, dag/avond, seizoen, gelegenheid) en kies dan de best passende geuren UITSLUITEND uit de catalogus hieronder, met respect voor de CATEGORIE-REGEL hierboven.
 2. Dupe-matching: noemt de klant een merkparfum dat wij niet verkopen (bv. "Gucci Bloom", "Dior Sauvage"), zoek dan op geurprofiel/noten de dichtstbijzijnde geur uit onze catalogus en leg uit dat die "geïnspireerd is op / lijkt op" dat profiel.
+   • MERKVRAGEN (belangrijk): vraagt de klant welke geuren je hebt van een bepaald merk/huis (bv. "welke Louis Vuitton geuren heb je?", "iets van Tom Ford?"), kijk dan in de catalogus naar het veld "merk:" van elk product en som ALLE producten op waarvan het merk overeenkomt met het gevraagde merk (hoofdletter-ongevoelig). WEIGER dit NOOIT. Antwoord met: "Onze geuren geïnspireerd op [merk] zijn:" gevolgd door de lijst (code + "geïnspireerd door"-naam). Heeft een product geen "merk:"-veld maar weet je 100% zeker bij welk huis de geur hoort, dan mag je die toevoegen — maar verzin nooit een merk. Staat er niets van dat merk in de catalogus, zeg dat eerlijk en bied aan om op geurprofiel een mooie match te zoeken.
 3. Klantvragen beantwoorden over levering, retour, gebruik, prijzen en aanbiedingen — uitsluitend op basis van de WINKELINFO hieronder.
 4. Leads verzamelen: wil de klant bestellen, teruggebeld worden of een mens spreken, of deelt hij interesse + contactgegevens? Vraag dan vriendelijk naam + e-mail (evt. telefoon) en gebruik de tool 'capture_lead'.
 
@@ -140,6 +142,32 @@ async function saveLead(args, sessionId) {
   });
 }
 
+// Detects whether the latest user message asks about a designer house we carry
+// and, if so, returns a strict instruction listing the exact matching products.
+const BRAND_ALIASES = {
+  "Louis Vuitton": ["louis vuitton", "louisvuitton", "lv", "l.v."],
+  "Yves Saint Laurent": ["yves saint laurent", "ysl"],
+  "Maison Francis Kurkdjian": ["maison francis kurkdjian", "mfk", "francis kurkdjian", "kurkdjian"],
+  "Parfums de Marly": ["parfums de marly", "pdm", "de marly", "marly"],
+};
+function buildBrandNote(products, history) {
+  const lastUser = [...history].reverse().find((m) => m.role === "user")?.content?.toLowerCase() || "";
+  if (!lastUser) return null;
+  const brands = [...new Set(products.map((p) => p.inspiredBrand).filter(Boolean))];
+  let matched = null;
+  for (const b of brands) {
+    const aliases = [b.toLowerCase(), ...(BRAND_ALIASES[b] || [])];
+    if (aliases.some((a) => lastUser.includes(a))) { matched = b; break; }
+  }
+  if (!matched) return null;
+  const list = products
+    .filter((p) => p.inspiredBrand === matched)
+    .map((p) => `${p.code} (geïnspireerd door ${p.inspiredBy}, ${p.category})`)
+    .join("; ");
+  if (!list) return null;
+  return `DE KLANT VRAAGT NAAR HET MERK "${matched}". De ENIGE producten in onze catalogus die bij dit merk horen zijn: ${list}. Som EXACT en UITSLUITEND deze producten op (voeg geen enkel ander product toe, ook niet van een ander merk), in de taal van de klant, in de stijl: "Onze geuren geïnspireerd op ${matched} zijn: ...". Vermeld per item de code en de geïnspireerd-door-naam.`;
+}
+
 // ---- Main entry -----------------------------------------------------------
 // history: [{ role: 'user'|'assistant', content }]
 export async function runChat({ history = [], sessionId }) {
@@ -152,6 +180,11 @@ export async function runChat({ history = [], sessionId }) {
     { role: "system", content: buildSystemPrompt(products, settings) },
     ...history.map((m) => ({ role: m.role, content: m.content })),
   ];
+
+  // Deterministic brand handling: if the customer asks about a designer house we
+  // carry, inject the EXACT matching product list so the model can't miss or invent.
+  const brandNote = buildBrandNote(products, history);
+  if (brandNote) messages.push({ role: "system", content: brandNote });
 
   let leadCaptured = null;
 
