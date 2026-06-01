@@ -5,7 +5,7 @@ import Modal from "../components/Modal.jsx";
 const EMPTY = {
   code: "", name: "", category: "heren", gender: "", inspiredBy: "", realName: "",
   type: "", intensity: "", season: "", notes: "", occasions: "",
-  priceRegular: "", priceSale: "", content: "", description: "", active: true, images: [],
+  priceRegular: "", priceSale: "", content: "", description: "", url: "", active: true, images: [],
 };
 
 export default function Products() {
@@ -106,6 +106,8 @@ function ImageUploader({ images, setImages }) {
   const inputRef = useRef(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [link, setLink] = useState("");
+  const full = images.length >= 4;
 
   async function onPick(e) {
     const files = [...e.target.files];
@@ -125,9 +127,19 @@ function ImageUploader({ images, setImages }) {
     finally { setBusy(false); }
   }
 
+  function addByUrl() {
+    const u = link.trim();
+    if (!u) return;
+    if (!/^https?:\/\//i.test(u)) { setErr("Voer een geldige URL in (begin met http)"); return; }
+    if (full) return;
+    setErr("");
+    setImages([...images, u]);
+    setLink("");
+  }
+
   return (
     <div className="field full">
-      <label>Foto's (max 4)</label>
+      <label>Foto's (max 4) — upload of plak een afbeeldings-URL</label>
       <div className="img-grid">
         {images.map((url, i) => (
           <div className="img-tile" key={i}>
@@ -135,15 +147,25 @@ function ImageUploader({ images, setImages }) {
             <button type="button" className="img-x" onClick={() => setImages(images.filter((_, j) => j !== i))}>×</button>
           </div>
         ))}
-        {images.length < 4 && (
+        {!full && (
           <button type="button" className="img-add" onClick={() => inputRef.current?.click()} disabled={busy}>
-            {busy ? "Uploaden…" : "＋ Foto"}
+            {busy ? "Uploaden…" : "＋ Upload"}
           </button>
         )}
       </div>
       <input ref={inputRef} type="file" accept="image/*" multiple hidden onChange={onPick} />
+      {!full && (
+        <div className="img-url-row">
+          <input
+            type="url" value={link} placeholder="…of plak afbeeldings-URL (https://…)"
+            onChange={(e) => setLink(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addByUrl(); } }}
+          />
+          <button type="button" className="btn sm" onClick={addByUrl}>Toevoegen</button>
+        </div>
+      )}
       {err && <div className="login-error">{err}</div>}
-      <div className="hint">JPG/PNG/WebP, max 5MB per foto. Opgeslagen in Supabase Storage.</div>
+      <div className="hint">{images.length}/4 foto's · JPG/PNG/WebP (max 5MB) via upload, of een directe afbeeldings-URL.</div>
     </div>
   );
 }
@@ -205,6 +227,9 @@ function ProductModal({ product, onClose, onSaved }) {
             </select>
           </Field>
           <Field label="Beschrijving" full><textarea rows="2" value={f.description || ""} onChange={set("description")} /></Field>
+          <Field label="Productlink (URL naar de pagina van dit parfum)" full hint="De chatbot stuurt klanten via 'Bekijk →' naar deze pagina">
+            <input type="url" value={f.url || ""} onChange={set("url")} placeholder="https://geurbar.com/products/..." />
+          </Field>
           <ImageUploader images={f.images} setImages={(imgs) => setF({ ...f, images: imgs })} />
         </div>
         {err && <div className="login-error">{err}</div>}

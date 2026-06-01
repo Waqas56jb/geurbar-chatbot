@@ -129,6 +129,9 @@ tbody tr:hover td { background: #fafafa; }
 .img-add { width: 84px; height: 84px; border-radius: 10px; border: 1.5px dashed var(--line); background: var(--soft); color: var(--muted); cursor: pointer; font-size: 13px; }
 .img-add:hover { border-color: var(--ink); color: var(--ink); }
 .img-add:disabled { opacity: .6; cursor: default; }
+.img-url-row { display: flex; gap: 8px; margin-top: 10px; }
+.img-url-row input { flex: 1; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; font-family: inherit; }
+.img-url-row input:focus { outline: none; border-color: var(--ink); }
 
 /* ---- Preview ---- */
 .preview { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
