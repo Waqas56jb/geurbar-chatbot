@@ -211,6 +211,36 @@ app.get(
   })
 );
 
+// Returns the saved transcript for a session so chat persists across visits.
+const codesIn = (text) => [...new Set((text.match(/No\.\s?\d{2,4}/gi) || []).map((c) => c.replace(/\s/g, "")))];
+
+app.get(
+  "/api/chat/history",
+  wrap(async (req, res) => {
+    const sid = String(req.query.sessionId || "");
+    if (!sid) return res.json({ sessionId: sid, messages: [] });
+    const convo = await prisma.conversation.findUnique({
+      where: { sessionId: sid },
+      include: { messages: { orderBy: { createdAt: "asc" } } },
+    });
+    if (!convo) return res.json({ sessionId: sid, messages: [] });
+
+    const msgs = convo.messages.filter((m) => m.role !== "system");
+    const allCodes = [...new Set(msgs.filter((m) => m.role === "assistant").flatMap((m) => codesIn(m.content)))];
+    let byCode = {};
+    if (allCodes.length) {
+      const prods = await prisma.product.findMany({ where: { active: true, code: { in: allCodes } } });
+      byCode = Object.fromEntries(prods.map((p) => [p.code, p]));
+    }
+    const messages = msgs.map((m) => {
+      if (m.role !== "assistant") return { role: m.role, content: m.content };
+      const products = codesIn(m.content).map((c) => byCode[c]).filter(Boolean);
+      return { role: "assistant", content: m.content, products };
+    });
+    res.json({ sessionId: sid, messages });
+  })
+);
+
 app.post(
   "/api/leads",
   wrap(async (req, res) => {
